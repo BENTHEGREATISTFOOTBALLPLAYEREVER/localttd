@@ -315,9 +315,91 @@
         .wrap { padding: 24px 14px 64px; }
         .result h3 { font-size: 23px; }
       }
+
+      /* lock screen */
+      .lock-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: rgba(253, 246, 236, 0.7);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+      }
+      .lock-screen.hidden { display: none; }
+      .lock-card {
+        background: rgba(255, 252, 246, 0.95);
+        border: 1px solid var(--border);
+        padding: 36px 28px;
+        border-radius: 22px;
+        text-align: center;
+        max-width: 340px;
+        width: 100%;
+        box-shadow: 0 6px 24px rgba(80, 50, 40, 0.18);
+      }
+      .lock-card h2 {
+        font-family: "Parisienne", cursive;
+        font-size: 38px;
+        margin: 0 0 4px;
+        color: var(--accent);
+      }
+      .lock-card p {
+        margin: 0 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+        font-family: "Fraunces", serif;
+      }
+      .lock-card input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-size: 16px;
+        font-family: inherit;
+        text-align: center;
+      }
+      .lock-card button {
+        width: 100%;
+        margin-top: 10px;
+        padding: 12px;
+        background: var(--accent);
+        color: white;
+        border: 0;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        font-family: "Fraunces", serif;
+      }
+      .pw-error {
+        color: var(--accent);
+        font-size: 13px;
+        margin-top: 10px !important;
+        font-style: italic;
+        min-height: 18px;
+      }
+      .pw-error.shake { animation: shake 0.4s; }
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-6px); }
+        75% { transform: translateX(6px); }
+      }
     </style>
   </head>
   <body>
+    <div id="lockScreen" class="lock-screen">
+      <div class="lock-card">
+        <h2>private</h2>
+        <p>enter password</p>
+        <input id="pwInput" type="password" autocomplete="off" autofocus />
+        <button id="pwSubmit" type="button">enter</button>
+        <p id="pwError" class="pw-error"></p>
+      </div>
+    </div>
+
     <div class="wrap">
       <div class="header">
         <h1>what should we <em>do</em> today?</h1>
@@ -333,7 +415,7 @@
           placeholder="just me + a friend / dad / mom / brother..."
           autocomplete="off"
         />
-        <div class="quick-fill">
+        <div class="quick-fill" id="companionRow">
           <span class="chip" data-fill="dad">+ dad</span>
           <span class="chip" data-fill="mom">+ mom</span>
           <span class="chip" data-fill="friend">+ a friend</span>
@@ -349,6 +431,22 @@
           name="interests"
           placeholder="type anything for someone else..."
         ></textarea>
+
+        <label class="field-label">time of day <span class="hint">— pick any, or none for anytime</span></label>
+        <div class="quick-fill" id="timeRow">
+          <span class="chip" data-time="morning">🌅 morning</span>
+          <span class="chip" data-time="afternoon">☀️ afternoon</span>
+          <span class="chip" data-time="evening">🌆 evening</span>
+          <span class="chip" data-time="night">🌙 night</span>
+        </div>
+
+        <label class="field-label">weather <span class="hint">— filters out outdoor stuff in rain</span></label>
+        <div class="quick-fill" id="weatherRow">
+          <span class="chip active" data-weather="any">anything</span>
+          <span class="chip" data-weather="rain">☔ raining</span>
+          <span class="chip" data-weather="cold">🧥 cold</span>
+          <span class="chip" data-weather="sunny">☀️ sunny</span>
+        </div>
 
         <label class="field-label">budget <span class="hint">— pick as many as you want</span></label>
         <div class="budget-row" id="budgetRow">
@@ -374,27 +472,28 @@
       };
 
       const SAMPLE_DATA = [
-        { emoji: "🎬", accent: "#f7c8d0", title: "Metrograph — 2pm Sunday matinee", neighborhood: "Lower East Side", description: "Tiny 2-screen indie cinema on Ludlow St. Their Sunday afternoon program is usually a restored 70s/80s classic. After: bookstore upstairs and the candy counter (Dots, Bit-O-Honey, the works).", price: "$$", why_it_fits: "Indie movies + weird/educational + not crowded. Direct Dad bullseye.", transit: "F train to East Broadway, ~15 min", source_url: "https://metrograph.com/calendar/" },
-        { emoji: "👗", accent: "#fcd9c2", title: "Pippin Vintage Jewelry — backyard sale", neighborhood: "Chelsea", description: "Tiny W 17th St shop with a hidden backyard. Sat–Sun pop-up tables of $5–20 vintage rings, brooches, lockets. Owner is chatty, knows every piece's story.", price: "$$", why_it_fits: "Shopping + crafts + not loud. Dig-through-bins energy.", transit: "1 train to 18th St, ~10 min", source_url: "https://pippinvintage.com/" },
-        { emoji: "🍪", accent: "#ffe2b8", title: "Levain Bakery (Bleecker) → Hudson River pier", neighborhood: "West Village → Pier 45", description: "Walk to the Bleecker St Levain (smaller than UWS, shorter line). Get the chocolate chip walnut cookie warm. Eat it on Pier 45 watching the river.", price: "$", why_it_fits: "Baked goods + nature in one walk. Free benches.", transit: "Walk, ~10 min round trip", source_url: "https://levainbakery.com/locations/" },
-        { emoji: "📚", accent: "#e7d4f3", title: "McNally Jackson Books → Café Habana coffee", neighborhood: "SoHo / Nolita", description: "Best indie bookstore for browsing — magazines, zines, art books, plus a little stationery wall. Two doors down: Café Habana for an iced cafe con leche. Sit on the bench out front.", price: "$$", why_it_fits: "Books + cafes + aesthetic + Mom or Dad. SoHo Sunday classic.", transit: "C/E to Spring St, ~12 min", source_url: "https://www.mcnallyjackson.com/locations" },
-        { emoji: "🐕", accent: "#ffe8d4", title: "Tompkins Square dog run → Veniero's cannoli", neighborhood: "East Village", description: "1-hour stop at the Tompkins dog run (puppies side, west fence, 4–5pm is peak chaos). Then 4-block walk to Veniero's (since 1894) for fresh cannoli — get it filled to-order.", price: "$", why_it_fits: "Dog runs + baked goods. Two of your interests in one route.", transit: "M14 bus across town, ~20 min", source_url: "https://venierospastry.com/" },
-        { emoji: "🎨", accent: "#d6e4d2", title: "Chelsea gallery row — 24th & 25th St crawl", neighborhood: "Chelsea", description: "Free contemporary art galleries packed into 2 blocks (Pace, Gagosian, David Zwirner, Hauser & Wirth). New shows open most Thursdays. Quiet on weekday afternoons.", price: "Free", why_it_fits: "Galleries + not crowded + Mom-coded. Multiple shows, ~90 min.", transit: "C/E to 23rd St, ~12 min", source_url: "https://www.chelseagallerymap.com/" },
-        { emoji: "🚲", accent: "#cfe2f0", title: "Citi Bike → Domino Park → Williamsburg waterfront", neighborhood: "Williamsburg, Brooklyn", description: "Christopher St dock → over Williamsburg Bridge → Domino Park (old sugar factory, sand volleyball court, taco truck). Best at golden hour. ~45 min ride one way.", price: "$", why_it_fits: "Bike riding + nature + aesthetic. Bridge view alone is worth it.", transit: "Walk to Christopher St dock, ~3 min", source_url: "https://www.dominopark.com/" },
-        { emoji: "🍵", accent: "#fce0d6", title: "Cha Cha Matcha (Bleecker) — strawberry matcha", neighborhood: "West Village", description: "Pink-tile aesthetic café 4 blocks from home. Strawberry matcha latte is the whole point. They have stickers and a tiny merch shelf.", price: "$", why_it_fits: "Cafe + aesthetic + walkable. Photo-friendly.", transit: "Walk, ~5 min", source_url: "https://www.chachamatcha.com/locations" },
-        { emoji: "🎟️", accent: "#f9d6d6", title: "Whitney Museum — pay-what-you-wish Friday 7–10pm", neighborhood: "Meatpacking District", description: "Free-ish entry Friday nights (slide a dollar, no one judges). Top-floor terraces are the move — Hudson sunset views, then walk the High Line back home.", price: "Free", why_it_fits: "Museum + galleries + aesthetic. Short walk from West Village.", transit: "Walk, ~15 min", source_url: "https://whitney.org/visit/free-friday-nights" },
-        { emoji: "💿", accent: "#f0d4e8", title: "Generation Records → Joe's Pizza → Washington Sq", neighborhood: "Greenwich Village", description: "Classic loop: vinyl/CD basement at Generation (Thompson St), $3.50 plain slice from Joe's (Carmine St), eat it on the WSP fountain. People-watch. Free piano, bring socks for the chess players.", price: "$", why_it_fits: "Hanging out + classic Village walk. Friend-coded.", transit: "Walk, all 3 within 8 min of each other", source_url: "https://www.generationrecords.com/" },
-        { emoji: "🥯", accent: "#ffe8c2", title: "Smorgasburg — Big Mozz mozzarella sticks", neighborhood: "Williamsburg waterfront, Brooklyn", description: "Saturdays only, April–Oct. 80+ vendors but zero in: Big Mozz (hand-pulled sticks), Burmese Bites (samosas), Bloomfield bagels. Get there before 1pm — lines balloon after.", price: "$$", why_it_fits: "Baked goods + boba-adjacent + market browsing.", transit: "L train to Bedford, ~25 min", source_url: "https://www.smorgasburg.com/williamsburg" },
-        { emoji: "🛍️", accent: "#f5d4dc", title: "L Train Vintage (Williamsburg) — $20 fill-a-bag days", neighborhood: "Williamsburg, Brooklyn", description: "Massive thrift store on N 4th. Tagged-color sale every weekend (40-70% off one color). Workshop-grade vintage tees and 90s jeans, not the curated overpriced stuff.", price: "$$", why_it_fits: "Clothes + thrifting + crafts-adjacent. Hours can vanish here.", transit: "L train to Bedford, ~25 min", source_url: "https://www.ltrainvintage.com/" },
-        { emoji: "📖", accent: "#dcd1ee", title: "Books Are Magic (Cobble Hill) → Court St walk", neighborhood: "Cobble Hill, Brooklyn", description: "The 'I read books' Instagram bookstore but it's actually really good. After: walk Court St — Stinky Bklyn for cheese, Frankel's deli for a black-and-white cookie, end at Brooklyn Bridge Park.", price: "$$", why_it_fits: "Books + cafes + walking + aesthetic. Strong Mom-fit.", transit: "F train to Bergen St, ~30 min", source_url: "https://www.booksaremagic.net/" },
-        { emoji: "🌉", accent: "#cfe5e8", title: "Brooklyn Heights Promenade → Iris Cafe → ferry home", neighborhood: "Brooklyn Heights", description: "Walk Brooklyn Bridge across, drop down to the Promenade (best Manhattan skyline view in NYC), iced coffee at Iris Cafe on Columbia Pl. Take the East River ferry back to Pier 11 (way faster than the train).", price: "$", why_it_fits: "Nature + walking + aesthetic + ferry as the move.", transit: "Walk over the bridge ~30 min, ferry back ~25 min", source_url: "https://www.iriscafenyc.com/" },
-        { emoji: "🖼️", accent: "#d4e0d2", title: "MoMA PS1 — $0 NYC residents, weekends", neighborhood: "Long Island City, Queens", description: "Free for NY residents (bring ID). Weird, big-scale contemporary stuff, way less crowded than MoMA proper. Warm Up music series in the courtyard summer Saturdays.", price: "Free", why_it_fits: "Galleries + weird/educational + not crowded. Dad-coded.", transit: "G train to 21st-Van Alst, ~30 min — or 7 train", source_url: "https://www.momaps1.org/" },
-        { emoji: "🍡", accent: "#ffd9d9", title: "Spot Dessert Bar — toast box + matcha lava cake", neighborhood: "East Village", description: "Asian dessert spot, dim lighting, tiny tables. The 'toast box' (giant brick of toast filled with ice cream) is the photo. Order the matcha lava cake too.", price: "$$", why_it_fits: "Boba + baked goods + aesthetic. Perfect with-a-friend dessert run.", transit: "6 train to Astor Pl, ~12 min", source_url: "https://www.spotdessertbar.com/" },
+        { emoji: "🎬", accent: "#f7c8d0", title: "Metrograph — 2pm Sunday matinee", neighborhood: "Lower East Side", description: "Tiny 2-screen indie cinema on Ludlow St. Their Sunday afternoon program is usually a restored 70s/80s classic. After: bookstore upstairs and the candy counter (Dots, Bit-O-Honey, the works).", price: "$$", why_it_fits: "Indie movies + weird/educational + not crowded. Direct Dad bullseye.", transit: "F train to East Broadway, ~15 min", source_url: "https://metrograph.com/calendar/", outdoor: false, times: ["afternoon", "evening"] },
+        { emoji: "👗", accent: "#fcd9c2", title: "Pippin Vintage Jewelry — backyard sale", neighborhood: "Chelsea", description: "Tiny W 17th St shop with a hidden backyard. Sat–Sun pop-up tables of $5–20 vintage rings, brooches, lockets. Owner is chatty, knows every piece's story.", price: "$$", why_it_fits: "Shopping + crafts + not loud. Dig-through-bins energy.", transit: "1 train to 18th St, ~10 min", source_url: "https://pippinvintage.com/", outdoor: true, times: ["afternoon"] },
+        { emoji: "🍪", accent: "#ffe2b8", title: "Levain Bakery (Bleecker) → Hudson River pier", neighborhood: "West Village → Pier 45", description: "Walk to the Bleecker St Levain (smaller than UWS, shorter line). Get the chocolate chip walnut cookie warm. Eat it on Pier 45 watching the river.", price: "$", why_it_fits: "Baked goods + nature in one walk. Free benches.", transit: "Walk, ~10 min round trip", source_url: "https://levainbakery.com/locations/", outdoor: true, times: ["morning", "afternoon", "evening"] },
+        { emoji: "📚", accent: "#e7d4f3", title: "McNally Jackson Books → Café Habana coffee", neighborhood: "SoHo / Nolita", description: "Best indie bookstore for browsing — magazines, zines, art books, plus a little stationery wall. Two doors down: Café Habana for an iced cafe con leche. Sit on the bench out front.", price: "$$", why_it_fits: "Books + cafes + aesthetic + Mom or Dad. SoHo Sunday classic.", transit: "C/E to Spring St, ~12 min", source_url: "https://www.mcnallyjackson.com/locations", outdoor: false, times: ["afternoon", "evening"] },
+        { emoji: "🐕", accent: "#ffe8d4", title: "Tompkins Square dog run → Veniero's cannoli", neighborhood: "East Village", description: "1-hour stop at the Tompkins dog run (puppies side, west fence, 4–5pm is peak chaos). Then 4-block walk to Veniero's (since 1894) for fresh cannoli — get it filled to-order.", price: "$", why_it_fits: "Dog runs + baked goods. Two of your interests in one route.", transit: "M14 bus across town, ~20 min", source_url: "https://venierospastry.com/", outdoor: true, times: ["afternoon"] },
+        { emoji: "🎨", accent: "#d6e4d2", title: "Chelsea gallery row — 24th & 25th St crawl", neighborhood: "Chelsea", description: "Free contemporary art galleries packed into 2 blocks (Pace, Gagosian, David Zwirner, Hauser & Wirth). New shows open most Thursdays. Quiet on weekday afternoons.", price: "Free", why_it_fits: "Galleries + not crowded + Mom-coded. Multiple shows, ~90 min.", transit: "C/E to 23rd St, ~12 min", source_url: "https://www.chelseagallerymap.com/", outdoor: false, times: ["afternoon"] },
+        { emoji: "🚲", accent: "#cfe2f0", title: "Citi Bike → Domino Park → Williamsburg waterfront", neighborhood: "Williamsburg, Brooklyn", description: "Christopher St dock → over Williamsburg Bridge → Domino Park (old sugar factory, sand volleyball court, taco truck). Best at golden hour. ~45 min ride one way.", price: "$", why_it_fits: "Bike riding + nature + aesthetic. Bridge view alone is worth it.", transit: "Walk to Christopher St dock, ~3 min", source_url: "https://www.dominopark.com/", outdoor: true, times: ["afternoon", "evening"] },
+        { emoji: "🍵", accent: "#fce0d6", title: "Cha Cha Matcha (Bleecker) — strawberry matcha", neighborhood: "West Village", description: "Pink-tile aesthetic café 4 blocks from home. Strawberry matcha latte is the whole point. They have stickers and a tiny merch shelf.", price: "$", why_it_fits: "Cafe + aesthetic + walkable. Photo-friendly.", transit: "Walk, ~5 min", source_url: "https://www.chachamatcha.com/locations", outdoor: false, times: ["morning", "afternoon", "evening"] },
+        { emoji: "🎟️", accent: "#f9d6d6", title: "Whitney Museum — pay-what-you-wish Friday 7–10pm", neighborhood: "Meatpacking District", description: "Free-ish entry Friday nights (slide a dollar, no one judges). Top-floor terraces are the move — Hudson sunset views, then walk the High Line back home.", price: "Free", why_it_fits: "Museum + galleries + aesthetic. Short walk from West Village.", transit: "Walk, ~15 min", source_url: "https://whitney.org/visit/free-friday-nights", outdoor: true, times: ["evening"] },
+        { emoji: "💿", accent: "#f0d4e8", title: "Generation Records → Joe's Pizza → Washington Sq", neighborhood: "Greenwich Village", description: "Classic loop: vinyl/CD basement at Generation (Thompson St), $3.50 plain slice from Joe's (Carmine St), eat it on the WSP fountain. People-watch. Free piano, bring socks for the chess players.", price: "$", why_it_fits: "Hanging out + classic Village walk. Friend-coded.", transit: "Walk, all 3 within 8 min of each other", source_url: "https://www.generationrecords.com/", outdoor: true, times: ["afternoon", "evening"] },
+        { emoji: "🥯", accent: "#ffe8c2", title: "Smorgasburg — Big Mozz mozzarella sticks", neighborhood: "Williamsburg waterfront, Brooklyn", description: "Saturdays only, April–Oct. 80+ vendors but zero in: Big Mozz (hand-pulled sticks), Burmese Bites (samosas), Bloomfield bagels. Get there before 1pm — lines balloon after.", price: "$$", why_it_fits: "Baked goods + boba-adjacent + market browsing.", transit: "L train to Bedford, ~25 min", source_url: "https://www.smorgasburg.com/williamsburg", outdoor: true, times: ["morning", "afternoon"] },
+        { emoji: "🛍️", accent: "#f5d4dc", title: "L Train Vintage (Williamsburg) — $20 fill-a-bag days", neighborhood: "Williamsburg, Brooklyn", description: "Massive thrift store on N 4th. Tagged-color sale every weekend (40-70% off one color). Workshop-grade vintage tees and 90s jeans, not the curated overpriced stuff.", price: "$$", why_it_fits: "Clothes + thrifting + crafts-adjacent. Hours can vanish here.", transit: "L train to Bedford, ~25 min", source_url: "https://www.ltrainvintage.com/", outdoor: false, times: ["afternoon", "evening"] },
+        { emoji: "📖", accent: "#dcd1ee", title: "Books Are Magic (Cobble Hill) → Court St walk", neighborhood: "Cobble Hill, Brooklyn", description: "The 'I read books' Instagram bookstore but it's actually really good. After: walk Court St — Stinky Bklyn for cheese, Frankel's deli for a black-and-white cookie, end at Brooklyn Bridge Park.", price: "$$", why_it_fits: "Books + cafes + walking + aesthetic. Strong Mom-fit.", transit: "F train to Bergen St, ~30 min", source_url: "https://www.booksaremagic.net/", outdoor: true, times: ["afternoon"] },
+        { emoji: "🌉", accent: "#cfe5e8", title: "Brooklyn Heights Promenade → Iris Cafe → ferry home", neighborhood: "Brooklyn Heights", description: "Walk Brooklyn Bridge across, drop down to the Promenade (best Manhattan skyline view in NYC), iced coffee at Iris Cafe on Columbia Pl. Take the East River ferry back to Pier 11 (way faster than the train).", price: "$", why_it_fits: "Nature + walking + aesthetic + ferry as the move.", transit: "Walk over the bridge ~30 min, ferry back ~25 min", source_url: "https://www.iriscafenyc.com/", outdoor: true, times: ["afternoon", "evening"] },
+        { emoji: "🖼️", accent: "#d4e0d2", title: "MoMA PS1 — $0 NYC residents, weekends", neighborhood: "Long Island City, Queens", description: "Free for NY residents (bring ID). Weird, big-scale contemporary stuff, way less crowded than MoMA proper. Warm Up music series in the courtyard summer Saturdays.", price: "Free", why_it_fits: "Galleries + weird/educational + not crowded. Dad-coded.", transit: "G train to 21st-Van Alst, ~30 min — or 7 train", source_url: "https://www.momaps1.org/", outdoor: false, times: ["afternoon"] },
+        { emoji: "🍡", accent: "#ffd9d9", title: "Spot Dessert Bar — toast box + matcha lava cake", neighborhood: "East Village", description: "Asian dessert spot, dim lighting, tiny tables. The 'toast box' (giant brick of toast filled with ice cream) is the photo. Order the matcha lava cake too.", price: "$$", why_it_fits: "Boba + baked goods + aesthetic. Perfect with-a-friend dessert run.", transit: "6 train to Astor Pl, ~12 min", source_url: "https://www.spotdessertbar.com/", outdoor: false, times: ["evening", "night"] },
       ];
 
-      function pickSamples({ companion, interests, budgets }) {
+      function pickSamples({ companion, interests, budgets, times, weather }) {
         const text = `${companion ?? ""} ${interests ?? ""}`.toLowerCase();
         const budgetSet = new Set(Array.isArray(budgets) ? budgets : []);
+        const timeSet = new Set(Array.isArray(times) ? times : []);
         const matchesBudget = (item) => {
           if (budgetSet.size === 0) return true;
           if (budgetSet.has("free") && item.price === "Free") return true;
@@ -402,6 +501,11 @@
           if (budgetSet.has("under $50") && item.price !== "$$$") return true;
           if (budgetSet.has("splurge ok")) return true;
           return false;
+        };
+        // hard-exclude outdoor in rain, soft-rank-down in cold
+        const matchesWeather = (item) => {
+          if (weather === "rain" && item.outdoor) return false;
+          return true;
         };
         const score = (item) => {
           let s = 0;
@@ -416,9 +520,18 @@
           if (/(thrift|vintage|cloth)/.test(text) && /(vintage|thrift|l\s?train)/.test(blob)) s += 3;
           if (/(craft)/.test(text) && /(jewelr|vintage|book|stationery)/.test(blob)) s += 2;
           if (/(nature|park|outdoor)/.test(text) && /(park|river|pier|promenade|domino|nature)/.test(blob)) s += 2;
+          // time of day boost
+          if (timeSet.size > 0) {
+            const overlap = (item.times || []).some((t) => timeSet.has(t));
+            if (overlap) s += 3;
+            else s -= 2;
+          }
+          // weather boosts/penalties
+          if (weather === "cold" && item.outdoor) s -= 2;
+          if (weather === "sunny" && item.outdoor) s += 2;
           return s + Math.random() * 0.6;
         };
-        return SAMPLE_DATA.filter(matchesBudget).sort((a, b) => score(b) - score(a)).slice(0, 8);
+        return SAMPLE_DATA.filter((i) => matchesBudget(i) && matchesWeather(i)).sort((a, b) => score(b) - score(a)).slice(0, 8);
       }
 
       const form = document.getElementById("form");
@@ -427,10 +540,38 @@
       const results = document.getElementById("results");
       const modeTag = document.getElementById("mode-tag");
 
-      // chip toggling
-      document.querySelectorAll(".chip").forEach((chip) => {
+      // ── password gate ────────────────────────────────────────────────
+      const PW = "paddington";
+      const lockScreen = document.getElementById("lockScreen");
+      const pwInput = document.getElementById("pwInput");
+      const pwSubmit = document.getElementById("pwSubmit");
+      const pwError = document.getElementById("pwError");
+
+      if (localStorage.getItem("localttd_pw_ok") === "yes") {
+        lockScreen.classList.add("hidden");
+      }
+      function checkPw() {
+        if (pwInput.value.toLowerCase().trim() === PW) {
+          localStorage.setItem("localttd_pw_ok", "yes");
+          lockScreen.classList.add("hidden");
+        } else {
+          pwError.textContent = "nope, try again";
+          pwError.classList.remove("shake");
+          // restart animation
+          void pwError.offsetWidth;
+          pwError.classList.add("shake");
+          pwInput.value = "";
+        }
+      }
+      pwSubmit.addEventListener("click", checkPw);
+      pwInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") checkPw();
+      });
+
+      // ── companion row: single-select ─────────────────────────────────
+      document.querySelectorAll("#companionRow .chip").forEach((chip) => {
         chip.addEventListener("click", () => {
-          document.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
+          document.querySelectorAll("#companionRow .chip").forEach((c) => c.classList.remove("active"));
           chip.classList.add("active");
           const key = chip.dataset.fill;
           companion.value = key ? key : "just me";
@@ -439,6 +580,19 @@
           } else if (key === "" || key === "friend") {
             interests.value = "";
           }
+        });
+      });
+
+      // ── time row: multi-select ───────────────────────────────────────
+      document.querySelectorAll("#timeRow .chip").forEach((chip) => {
+        chip.addEventListener("click", () => chip.classList.toggle("active"));
+      });
+
+      // ── weather row: single-select ───────────────────────────────────
+      document.querySelectorAll("#weatherRow .chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          document.querySelectorAll("#weatherRow .chip").forEach((c) => c.classList.remove("active"));
+          chip.classList.add("active");
         });
       });
 
@@ -461,6 +615,11 @@
         const budgets = Array.from(
           document.querySelectorAll(".budget-pill input:checked")
         ).map((cb) => cb.value);
+        const times = Array.from(
+          document.querySelectorAll("#timeRow .chip.active")
+        ).map((c) => c.dataset.time);
+        const weatherChip = document.querySelector("#weatherRow .chip.active");
+        const weather = weatherChip ? weatherChip.dataset.weather : "any";
 
         // small delay so it feels like it's thinking
         await new Promise((res) => setTimeout(res, 350));
@@ -468,6 +627,8 @@
           companion: companion.value,
           interests: interests.value,
           budgets: budgets,
+          times: times,
+          weather: weather,
         });
         render({ mode: "sample", suggestions });
         button.disabled = false;
