@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>what should we do today?</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@400;500;600&family=Parisienne&family=Dancing+Script:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --cream: #fdf6ec;
+        --cream-2: #f9eedc;
+        --blush: #ffd1d9;
+        --peach: #ffd6bf;
+        --lavender: #e7d6f3;
+        --ink: #2a1f1a;
+        --ink-soft: #6b5d54;
+        --accent: #c84b50;
+        --accent-soft: #fbe1de;
+        --border: rgba(120, 90, 70, 0.12);
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        color: var(--ink);
+        background: var(--cream) url("/images/aesthetic.jpg") center / cover fixed no-repeat;
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+      }
+      /* soft cream wash so the photo isn't too busy under the cards */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(253, 246, 236, 0.35), rgba(253, 246, 236, 0.55));
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 32px 18px 80px;
+        position: relative;
+        z-index: 2;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 28px;
+        background: rgba(255, 252, 246, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        padding: 22px 18px;
+        box-shadow: 0 6px 24px rgba(80, 50, 40, 0.1);
+      }
+      h1 {
+        font-family: "Parisienne", "Dancing Script", cursive;
+        font-size: 56px;
+        font-weight: 400;
+        letter-spacing: 0;
+        line-height: 1.05;
+        margin: 0 0 6px;
+        color: var(--ink);
+      }
+      h1 em {
+        font-style: normal;
+        color: var(--accent);
+      }
+      .sub {
+        color: var(--ink-soft);
+        font-size: 15px;
+        font-style: italic;
+        font-family: "Fraunces", Georgia, serif;
+      }
+
+      .card {
+        background: rgba(255, 252, 246, 0.94);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        padding: 22px;
+        box-shadow: 0 6px 24px rgba(80, 50, 40, 0.12);
+        margin-bottom: 18px;
+      }
+
+      label.field-label {
+        display: block;
+        font-family: "Fraunces", Georgia, serif;
+        font-style: italic;
+        font-weight: 600;
+        font-size: 17px;
+        color: var(--ink);
+        margin: 14px 0 8px;
+      }
+      label.field-label .hint {
+        font-style: normal;
+        font-family: "Inter", sans-serif;
+        font-weight: 400;
+        font-size: 12px;
+        color: var(--ink-soft);
+      }
+
+      input[type="text"], textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        font-size: 15px;
+        font-family: inherit;
+        background: rgba(255, 255, 255, 0.7);
+        color: var(--ink);
+        transition: border-color 0.15s, background 0.15s;
+      }
+      input[type="text"]:focus, textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        background: white;
+      }
+      textarea { min-height: 60px; resize: vertical; }
+
+      .quick-fill { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 0; }
+      .chip {
+        padding: 7px 14px;
+        background: rgba(255, 255, 255, 0.75);
+        color: var(--ink);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+        user-select: none;
+      }
+      .chip:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+      .chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+      .budget-row { display: flex; gap: 8px; flex-wrap: wrap; }
+      .budget-pill {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 100px;
+        padding: 11px 12px;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1.5px solid var(--border);
+        border-radius: 14px;
+        text-align: center;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.15s;
+        user-select: none;
+      }
+      .budget-pill input { display: none; }
+      .budget-pill.active {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .budget-hint {
+        font-size: 12px;
+        color: var(--ink-soft);
+        margin-top: 6px;
+        font-style: italic;
+        font-family: "Fraunces", Georgia, serif;
+      }
+
+      button.go {
+        width: 100%;
+        margin-top: 20px;
+        padding: 15px;
+        background: var(--accent);
+        color: white;
+        border: 0;
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 600;
+        font-family: "Fraunces", Georgia, serif;
+        cursor: pointer;
+        letter-spacing: 0.3px;
+        transition: transform 0.1s, background 0.15s;
+        box-shadow: 0 4px 14px rgba(200, 75, 80, 0.3);
+      }
+      button.go:hover { background: #b53e43; transform: translateY(-1px); }
+      button.go:active { transform: translateY(0); }
+      button.go:disabled { opacity: 0.6; cursor: not-allowed; }
+
+      .results { margin-top: 24px; }
+
+      .result {
+        background: rgba(255, 252, 246, 0.95);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        margin-bottom: 16px;
+        overflow: hidden;
+        box-shadow: 0 6px 24px rgba(80, 50, 40, 0.12);
+        transition: transform 0.15s, box-shadow 0.15s;
+      }
+      .result:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 28px rgba(180, 120, 100, 0.12);
+      }
+      .result-img {
+        height: 110px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 60px;
+        position: relative;
+      }
+      .result-img::after {
+        content: "";
+        position: absolute; inset: 0;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+        pointer-events: none;
+        opacity: 0.5;
+      }
+      .result-body { padding: 18px 20px 20px; }
+      .result h3 {
+        font-family: "Dancing Script", cursive;
+        font-weight: 700;
+        font-size: 26px;
+        margin: 0 0 6px;
+        line-height: 1.2;
+        letter-spacing: 0;
+        color: var(--ink);
+      }
+      .meta {
+        color: var(--ink-soft);
+        font-size: 13px;
+        margin-bottom: 10px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .price {
+        background: var(--accent-soft);
+        color: var(--accent);
+        padding: 2px 9px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .desc { font-size: 14px; line-height: 1.55; margin: 0 0 12px; color: var(--ink); }
+      .why {
+        background: var(--cream-2);
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.5;
+        margin-bottom: 10px;
+        font-style: italic;
+        font-family: "Fraunces", Georgia, serif;
+      }
+      .why b {
+        font-style: normal;
+        font-family: "Inter", sans-serif;
+        font-weight: 600;
+        color: var(--accent);
+        margin-right: 4px;
+      }
+      .transit { font-size: 13px; color: var(--ink-soft); margin-bottom: 10px; }
+      .source a {
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        border-bottom: 1px solid var(--accent-soft);
+      }
+      .source a:hover { border-bottom-color: var(--accent); }
+
+      .empty {
+        text-align: center;
+        color: var(--ink-soft);
+        padding: 40px 0;
+        font-style: italic;
+        font-family: "Fraunces", Georgia, serif;
+      }
+
+      .mode-tag {
+        text-align: center;
+        font-size: 12px;
+        color: var(--ink-soft);
+        margin: 20px 0 0;
+        font-style: italic;
+        font-family: "Fraunces", Georgia, serif;
+      }
+      .badge {
+        display: inline-block;
+        padding: 3px 10px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-style: normal;
+        font-family: "Inter", sans-serif;
+      }
+
+      @media (max-width: 480px) {
+        h1 { font-size: 44px; }
+        .wrap { padding: 24px 14px 64px; }
+        .result h3 { font-size: 23px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <h1>what should we <em>do</em> today?</h1>
+        <p class="sub">things to do near the West Village, just for you &amp; whoever you're with</p>
+      </div>
+
+      <form id="form" class="card">
+        <label class="field-label" for="companion">who's coming?</label>
+        <input
+          id="companion"
+          name="companion"
+          type="text"
+          placeholder="just me + a friend / dad / mom / brother..."
+          autocomplete="off"
+        />
+        <div class="quick-fill">
+          <span class="chip" data-fill="dad">+ dad</span>
+          <span class="chip" data-fill="mom">+ mom</span>
+          <span class="chip" data-fill="friend">+ a friend</span>
+          <span class="chip" data-fill="">just me</span>
+        </div>
+
+        <label class="field-label" for="interests">
+          their interests
+          <span class="hint">— optional, auto-fills for mom/dad</span>
+        </label>
+        <textarea
+          id="interests"
+          name="interests"
+          placeholder="type anything for someone else..."
+        ></textarea>
+
+        <label class="field-label">budget <span class="hint">— pick as many as you want</span></label>
+        <div class="budget-row" id="budgetRow">
+          <label class="budget-pill"><input type="checkbox" value="free" /><span>free</span></label>
+          <label class="budget-pill active"><input type="checkbox" value="under $20" checked /><span>under $20</span></label>
+          <label class="budget-pill"><input type="checkbox" value="under $50" /><span>under $50</span></label>
+          <label class="budget-pill"><input type="checkbox" value="splurge ok" /><span>splurge ok</span></label>
+        </div>
+        <div class="budget-hint">leave them all unchecked to see everything</div>
+
+        <button class="go" type="submit">show me ideas ✿</button>
+      </form>
+
+      <div id="results" class="results"></div>
+      <p class="mode-tag" id="mode-tag"></p>
+    </div>
+
+    <script>
+      let profiles = {};
+      fetch("/api/profiles").then((r) => r.json()).then((p) => (profiles = p));
+
+      const form = document.getElementById("form");
+      const companion = document.getElementById("companion");
+      const interests = document.getElementById("interests");
+      const results = document.getElementById("results");
+      const modeTag = document.getElementById("mode-tag");
+
+      // chip toggling
+      document.querySelectorAll(".chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          document.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
+          chip.classList.add("active");
+          const key = chip.dataset.fill;
+          companion.value = key ? key : "just me";
+          if (profiles[key]) {
+            interests.value = profiles[key];
+          } else if (key === "" || key === "friend") {
+            interests.value = "";
+          }
+        });
+      });
+
+      // budget pill toggle (let the label do the work, just sync the class)
+      document.querySelectorAll(".budget-pill").forEach((pill) => {
+        const cb = pill.querySelector("input");
+        cb.addEventListener("change", () => {
+          pill.classList.toggle("active", cb.checked);
+        });
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const button = form.querySelector("button");
+        button.disabled = true;
+        button.textContent = "thinking…";
+        results.innerHTML = '<div class="empty">looking for ideas…</div>';
+        modeTag.textContent = "";
+
+        const budgets = Array.from(
+          document.querySelectorAll(".budget-pill input:checked")
+        ).map((cb) => cb.value);
+
+        try {
+          const r = await fetch("/api/suggest", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              companion: companion.value,
+              interests: interests.value,
+              budgets: budgets,
+            }),
+          });
+          const data = await r.json();
+          render(data);
+        } catch (err) {
+          results.innerHTML = '<div class="empty">something broke — try again</div>';
+        } finally {
+          button.disabled = false;
+          button.textContent = "show me ideas ✿";
+        }
+      });
+
+      const FALLBACK_GRADIENTS = [
+        ["#ffd6bf", "#ffb3a0"],
+        ["#ffd1d9", "#f7a8b8"],
+        ["#e7d6f3", "#c9b0e6"],
+        ["#fce8d4", "#f5d4a8"],
+        ["#d6e4d2", "#b8d4b2"],
+        ["#cfe2f0", "#a8cae0"],
+        ["#fce0d6", "#f0c0b0"],
+      ];
+
+      function gradientFor(item, idx) {
+        if (item.accent) {
+          return `linear-gradient(135deg, ${item.accent}, ${shade(item.accent, -18)})`;
+        }
+        const g = FALLBACK_GRADIENTS[idx % FALLBACK_GRADIENTS.length];
+        return `linear-gradient(135deg, ${g[0]}, ${g[1]})`;
+      }
+
+      function shade(hex, percent) {
+        // soft darken/lighten
+        const h = hex.replace("#", "");
+        const r = parseInt(h.substring(0, 2), 16);
+        const g = parseInt(h.substring(2, 4), 16);
+        const b = parseInt(h.substring(4, 6), 16);
+        const adj = (c) => Math.max(0, Math.min(255, Math.round(c + (percent / 100) * 255)));
+        return `rgb(${adj(r)}, ${adj(g)}, ${adj(b)})`;
+      }
+
+      function render(data) {
+        if (!data.suggestions?.length) {
+          results.innerHTML = '<div class="empty">no ideas matched — try unchecking a budget</div>';
+          return;
+        }
+        results.innerHTML = data.suggestions
+          .map(
+            (s, i) => `
+          <div class="result">
+            <div class="result-img" style="background: ${gradientFor(s, i)}">
+              <span style="position:relative;z-index:2">${s.emoji || "✦"}</span>
+            </div>
+            <div class="result-body">
+              <h3>${escape(s.title)}</h3>
+              <div class="meta">
+                <span class="price">${escape(s.price ?? "")}</span>
+                <span>${escape(s.neighborhood ?? "")}</span>
+              </div>
+              <p class="desc">${escape(s.description ?? "")}</p>
+              ${s.why_it_fits ? `<div class="why"><b>why it fits</b>${escape(s.why_it_fits)}</div>` : ""}
+              ${s.transit ? `<div class="transit">🚆 ${escape(s.transit)}</div>` : ""}
+              ${s.source_url ? `<div class="source"><a href="${escape(s.source_url)}" target="_blank" rel="noopener">verify / details →</a></div>` : ""}
+            </div>
+          </div>
+        `
+          )
+          .join("");
+
+        if (data.mode === "sample") {
+          modeTag.innerHTML = `<span class="badge">sample mode</span> &nbsp; built-in examples — add an API key to .env for live web results`;
+        } else if (data.mode === "live") {
+          modeTag.innerHTML = `<span class="badge" style="background:#dceadd;color:#3d6e44">live</span> &nbsp; results from Claude with web search`;
+        } else if (data.mode === "sample-fallback") {
+          modeTag.innerHTML = `<span class="badge" style="background:#fcebcc;color:#7a4a00">api error</span> &nbsp; ${escape(data.error || "")}`;
+        }
+      }
+
+      function escape(s) {
+        return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+        })[c]);
+      }
+    </script>
+  </body>
+</html>
